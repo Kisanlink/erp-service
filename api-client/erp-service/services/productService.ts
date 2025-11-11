@@ -1,0 +1,294 @@
+import type { ApiClient } from '../utils/apiClient.js';
+import type {
+  ApiResponse,
+  ProductResponse,
+  CreateProductRequest,
+  UpdateProductRequest,
+  ProductWithPricesResponse,
+  ProductVariantResponse,
+  CreateProductVariantRequest,
+  UpdateProductVariantRequest,
+  ProductPriceResponse,
+  CreateProductPriceRequest,
+  UpdateProductPriceRequest,
+  TopSellingProductResponse,
+} from '../types/index.js';
+
+/**
+ * Bulk operation response
+ */
+export interface BulkOperationResponse {
+  success_count: number;
+  error_count: number;
+  errors?: Array<{
+    index: number;
+    error: string;
+  }>;
+}
+
+/**
+ * Creates product service with all product-related operations
+ *
+ * @param apiClient - Configured API client instance
+ * @returns Product service methods
+ *
+ * @example
+ * ```typescript
+ * const productService = createProductService(apiClient);
+ * const products = await productService.list({ is_active: true });
+ * ```
+ */
+const createProductService = (apiClient: ApiClient) => {
+  return {
+    /**
+     * List products with optional filters
+     *
+     * @param params - Filter parameters
+     * @returns List of products
+     */
+    list: (params?: {
+      search?: string;
+      category?: string;
+      is_active?: boolean;
+      is_perishable?: boolean;
+      limit?: number;
+      offset?: number;
+    }) => apiClient.get<ApiResponse<ProductResponse[]>>('/api/v1/products', { params }),
+
+    /**
+     * Get product by ID
+     *
+     * @param id - Product ID
+     * @returns Product details
+     */
+    get: (id: string) =>
+      apiClient.get<ApiResponse<ProductResponse>>(`/api/v1/products/${id}`),
+
+    /**
+     * Get product with detailed pricing information
+     *
+     * @param id - Product ID
+     * @returns Product with prices
+     */
+    getWithPrices: (id: string) =>
+      apiClient.get<ApiResponse<ProductWithPricesResponse>>(`/api/v1/products/${id}/detailed`),
+
+    /**
+     * Create new product
+     *
+     * @param payload - Product creation data
+     * @returns Created product
+     */
+    create: (payload: CreateProductRequest) =>
+      apiClient.post<ApiResponse<ProductResponse>>('/api/v1/products', payload),
+
+    /**
+     * Update existing product
+     *
+     * @param id - Product ID
+     * @param payload - Product update data
+     * @returns Updated product
+     */
+    update: (id: string, payload: UpdateProductRequest) =>
+      apiClient.put<ApiResponse<ProductResponse>>(`/api/v1/products/${id}`, payload),
+
+    /**
+     * Delete product
+     *
+     * @param id - Product ID
+     * @returns Void on success
+     */
+    delete: (id: string) =>
+      apiClient.delete<ApiResponse<void>>(`/api/v1/products/${id}`),
+
+    /**
+     * Bulk create products
+     *
+     * @param products - Array of product creation requests
+     * @returns Bulk operation result
+     */
+    bulkCreate: (products: CreateProductRequest[]) =>
+      apiClient.post<ApiResponse<BulkOperationResponse>>('/api/v1/products/bulk', { products }),
+
+    /**
+     * Bulk update products
+     *
+     * @param updates - Array of product updates with IDs
+     * @returns Bulk operation result
+     */
+    bulkUpdate: (updates: Array<{ id: string } & UpdateProductRequest>) =>
+      apiClient.put<ApiResponse<BulkOperationResponse>>('/api/v1/products/bulk', { updates }),
+
+    /**
+     * Product variant management operations
+     */
+    variants: {
+      /**
+       * List variants for a product
+       *
+       * @param productId - Product ID
+       * @returns List of variants
+       */
+      list: (productId: string) =>
+        apiClient.get<ApiResponse<ProductVariantResponse[]>>(`/api/v1/products/${productId}/variants`),
+
+      /**
+       * Get specific variant
+       *
+       * @param productId - Product ID
+       * @param variantId - Variant ID
+       * @returns Variant details
+       */
+      get: (productId: string, variantId: string) =>
+        apiClient.get<ApiResponse<ProductVariantResponse>>(`/api/v1/products/${productId}/variants/${variantId}`),
+
+      /**
+       * Create product variant
+       *
+       * @param payload - Variant creation data
+       * @returns Created variant
+       */
+      create: (payload: CreateProductVariantRequest) =>
+        apiClient.post<ApiResponse<ProductVariantResponse>>('/api/v1/product-variants', payload),
+
+      /**
+       * Update product variant
+       *
+       * @param id - Variant ID
+       * @param payload - Variant update data
+       * @returns Updated variant
+       */
+      update: (id: string, payload: UpdateProductVariantRequest) =>
+        apiClient.put<ApiResponse<ProductVariantResponse>>(`/api/v1/product-variants/${id}`, payload),
+
+      /**
+       * Delete product variant
+       *
+       * @param id - Variant ID
+       * @returns Void on success
+       */
+      delete: (id: string) =>
+        apiClient.delete<ApiResponse<void>>(`/api/v1/product-variants/${id}`),
+    },
+
+    /**
+     * Product pricing management operations
+     */
+    prices: {
+      /**
+       * List prices for a product
+       *
+       * @param productId - Product ID
+       * @returns List of prices
+       */
+      list: (productId: string) =>
+        apiClient.get<ApiResponse<ProductPriceResponse[]>>(`/api/v1/products/${productId}/prices`),
+
+      /**
+       * Get active price for a product
+       *
+       * @param productId - Product ID
+       * @param priceType - Price type filter (PURCHASE, SALE, MRP)
+       * @returns Active price
+       */
+      getActive: (productId: string, priceType?: 'PURCHASE' | 'SALE' | 'MRP') =>
+        apiClient.get<ApiResponse<ProductPriceResponse>>(`/api/v1/products/${productId}/prices/active`, {
+          params: { price_type: priceType },
+        }),
+
+      /**
+       * Create product price
+       *
+       * @param payload - Price creation data
+       * @returns Created price
+       */
+      create: (payload: CreateProductPriceRequest) =>
+        apiClient.post<ApiResponse<ProductPriceResponse>>('/api/v1/product-prices', payload),
+
+      /**
+       * Update product price
+       *
+       * @param id - Price ID
+       * @param payload - Price update data
+       * @returns Updated price
+       */
+      update: (id: string, payload: UpdateProductPriceRequest) =>
+        apiClient.put<ApiResponse<ProductPriceResponse>>(`/api/v1/product-prices/${id}`, payload),
+
+      /**
+       * Delete product price
+       *
+       * @param id - Price ID
+       * @returns Void on success
+       */
+      delete: (id: string) =>
+        apiClient.delete<ApiResponse<void>>(`/api/v1/product-prices/${id}`),
+
+      /**
+       * Bulk update product prices
+       *
+       * @param updates - Array of price updates
+       * @returns Bulk operation result
+       */
+      bulkUpdate: (updates: Array<{ product_id: string; variant_id?: string; price_type: string; price: number }>) =>
+        apiClient.post<ApiResponse<BulkOperationResponse>>('/api/v1/product-prices/bulk-update', { updates }),
+    },
+
+    /**
+     * Search products by query
+     *
+     * @param query - Search query string
+     * @param params - Additional filter parameters
+     * @returns Search results
+     */
+    search: (query: string, params?: {
+      category?: string;
+      limit?: number;
+    }) => apiClient.get<ApiResponse<ProductResponse[]>>('/api/v1/products/search', {
+      params: { q: query, ...params },
+    }),
+
+    /**
+     * Get products by category
+     *
+     * @param category - Category name
+     * @returns Products in category
+     */
+    getByCategory: (category: string) =>
+      apiClient.get<ApiResponse<ProductResponse[]>>(`/api/v1/products/category/${category}`),
+
+    /**
+     * Get product by barcode
+     *
+     * @param barcode - Product barcode
+     * @returns Product details
+     */
+    getByBarcode: (barcode: string) =>
+      apiClient.get<ApiResponse<ProductResponse>>(`/api/v1/products/barcode/${barcode}`),
+
+    /**
+     * Get top selling products
+     *
+     * @param params - Date range and limit
+     * @returns Top selling products
+     */
+    getTopSelling: (params?: {
+      from_date?: string;
+      to_date?: string;
+      limit?: number;
+    }) => apiClient.get<ApiResponse<TopSellingProductResponse[]>>('/api/v1/products/top-selling', { params }),
+
+    /**
+     * Get slow moving products
+     *
+     * @param days - Number of days to consider (default: 90)
+     * @returns Slow moving products
+     */
+    getSlowMoving: (days: number = 90) =>
+      apiClient.get<ApiResponse<ProductResponse[]>>('/api/v1/products/slow-moving', {
+        params: { days },
+      }),
+  };
+};
+
+export default createProductService;
