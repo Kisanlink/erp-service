@@ -75,10 +75,13 @@ const createInventoryService = (apiClient: ApiClient) => {
       /**
        * Get low stock batches
        *
+       * @param threshold - Stock threshold (default: 10)
        * @returns Low stock batches
        */
-      getLowStock: () =>
-        apiClient.get<ApiResponse<InventoryBatchResponse[]>>('/api/v1/batches/low-stock'),
+      getLowStock: (threshold: number = 10) =>
+        apiClient.get<ApiResponse<InventoryBatchResponse[]>>('/api/v1/batches/low-stock', {
+          params: { threshold },
+        }),
 
       /**
        * Create inventory batch
@@ -151,11 +154,12 @@ const createInventoryService = (apiClient: ApiClient) => {
       /**
        * Create inventory transaction
        *
+       * @param batchId - Batch ID
        * @param payload - Transaction data
        * @returns Created transaction
        */
-      create: (payload: CreateInventoryTransactionRequest) =>
-        apiClient.post<ApiResponse<InventoryTransactionResponse>>('/api/v1/inventory/transactions', payload),
+      create: (batchId: string, payload: CreateInventoryTransactionRequest) =>
+        apiClient.post<ApiResponse<InventoryTransactionResponse>>(`/api/v1/batches/${batchId}/transactions`, payload),
 
       /**
        * Get transaction by ID
@@ -172,16 +176,12 @@ const createInventoryService = (apiClient: ApiClient) => {
      */
     stock: {
       /**
-       * Check product availability
+       * Get all products availability across warehouses
        *
-       * @param productId - Product ID
-       * @param variantId - Variant ID (optional)
-       * @returns Product availability across warehouses
+       * @returns All products availability
        */
-      checkAvailability: (productId: string, variantId?: string) =>
-        apiClient.get<ApiResponse<ProductAvailabilityResponse>>('/api/v1/inventory/availability', {
-          params: { product_id: productId, variant_id: variantId },
-        }),
+      checkAvailability: () =>
+        apiClient.get<ApiResponse<ProductAvailabilityResponse[]>>('/api/v1/products/availability'),
 
       /**
        * Reserve stock for order
