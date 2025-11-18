@@ -182,7 +182,7 @@ const createWebhookService = (apiClient: ApiClient) => {
      * @param secret - Webhook secret
      * @returns Validation result
      */
-    verifySignature: (payload: string, signature: string, secret: string): boolean => {
+    verifySignature: (_payload: string, _signature: string, _secret: string): boolean => {
       // This would be implemented client-side using crypto library
       // Example: HMAC-SHA256 verification
       // For now, this is a placeholder that would need actual crypto implementation
