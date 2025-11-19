@@ -25,14 +25,24 @@ export interface RequestOptions {
  * Builds headers for the request, including authorization if available
  * @param config - API configuration
  * @param extraHeaders - Additional headers to include
+ * @param isFormData - Whether the request body is FormData
  * @returns Headers object for fetch
  */
-function buildHeaders(config: ApiConfig, extraHeaders?: Record<string, string>): HeadersInit {
+function buildHeaders(
+  config: ApiConfig,
+  extraHeaders?: Record<string, string>,
+  isFormData?: boolean
+): HeadersInit {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...config.defaultHeaders,
     ...(extraHeaders || {}),
   };
+
+  // Only add Content-Type for JSON if not FormData
+  // FormData needs the browser to set Content-Type with boundary
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Add authorization header if token is available
   const token = config.getAccessToken?.();
@@ -44,18 +54,29 @@ function buildHeaders(config: ApiConfig, extraHeaders?: Record<string, string>):
 }
 
 /**
+ * Normalizes URL path by removing trailing slashes
+ * @param path - URL path to normalize
+ * @returns Normalized path without trailing slash
+ */
+function normalizeURLPath(path: string): string {
+  return path.replace(/\/+$/, '');
+}
+
+/**
  * Builds URL with query parameters
  * @param baseURL - Base URL of the API
  * @param endpoint - API endpoint path
  * @param params - Query parameters
- * @returns Complete URL with query string
+ * @returns Complete URL string with query string
  */
 function buildURL(
   baseURL: string,
   endpoint: string,
   params?: Record<string, string | number | boolean | undefined>
-): URL {
-  const url = new URL(endpoint, baseURL);
+): string {
+  const normalizedBase = normalizeURLPath(baseURL);
+  const normalizedEndpoint = normalizeURLPath(endpoint);
+  const url = new URL(normalizedEndpoint, normalizedBase);
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -65,7 +86,7 @@ function buildURL(
     });
   }
 
-  return url;
+  return url.toString();
 }
 
 /**
@@ -87,7 +108,10 @@ async function request<T>(
   options?: RequestOptions
 ): Promise<T> {
   const url = buildURL(config.baseURL, endpoint, options?.params);
-  const headers = buildHeaders(config, options?.headers);
+
+  // Check if body is FormData to handle Content-Type correctly
+  const isFormData = body instanceof FormData;
+  const headers = buildHeaders(config, options?.headers, isFormData);
   const timeout = options?.timeout || config.timeout;
 
   // Create abort controller for timeout
@@ -95,10 +119,11 @@ async function request<T>(
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      // Send FormData as-is, JSON stringify everything else
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
       signal: controller.signal,
     });
 

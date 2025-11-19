@@ -68,8 +68,7 @@ const createAttachmentService = (apiClient: ApiClient) => {
       formData.append('entity_id', entityId);
       return apiClient.post<ApiResponse<AttachmentResponse>>(
         '/api/v1/attachments',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        formData
       );
     },
 
