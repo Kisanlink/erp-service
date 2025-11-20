@@ -169,6 +169,63 @@ const createProductService = (apiClient: ApiClient) => {
        */
       delete: (id: string) =>
         apiClient.delete<ApiResponse<void>>(`/api/v1/product-variants/${id}`),
+
+      /**
+       * Variant pricing management operations
+       */
+      prices: {
+        /**
+         * List prices for a variant
+         *
+         * @param variantId - Variant ID
+         * @returns List of prices for the variant
+         */
+        list: (variantId: string) =>
+          apiClient.get<ApiResponse<ProductPriceResponse[]>>(`/api/v1/variants/${variantId}/prices`),
+
+        /**
+         * Get active price for a variant
+         *
+         * @param variantId - Variant ID
+         * @param priceType - Price type filter (PURCHASE, SALE, MRP)
+         * @returns Active price
+         */
+        getActive: (variantId: string, priceType?: 'PURCHASE' | 'SALE' | 'MRP') =>
+          apiClient.get<ApiResponse<ProductPriceResponse>>(`/api/v1/variants/${variantId}/prices/active`, {
+            params: { price_type: priceType },
+          }),
+
+        /**
+         * Create price for a variant
+         *
+         * @param variantId - Variant ID
+         * @param payload - Price creation data (without variant_id as it's in URL)
+         * @returns Created price
+         */
+        create: (variantId: string, payload: Omit<CreateProductPriceRequest, 'variant_id'>) =>
+          apiClient.post<ApiResponse<ProductPriceResponse>>(`/api/v1/variants/${variantId}/prices`, payload),
+
+        /**
+         * Update variant price
+         *
+         * @param variantId - Variant ID
+         * @param priceId - Price ID
+         * @param payload - Price update data
+         * @returns Updated price
+         */
+        update: (variantId: string, priceId: string, payload: UpdateProductPriceRequest) =>
+          apiClient.put<ApiResponse<ProductPriceResponse>>(`/api/v1/variants/${variantId}/prices/${priceId}`, payload),
+
+        /**
+         * Delete variant price
+         *
+         * @param variantId - Variant ID
+         * @param priceId - Price ID
+         * @returns Void on success
+         */
+        delete: (variantId: string, priceId: string) =>
+          apiClient.delete<ApiResponse<void>>(`/api/v1/variants/${variantId}/prices/${priceId}`),
+      },
     },
 
     /**
@@ -185,7 +242,7 @@ const createProductService = (apiClient: ApiClient) => {
         apiClient.get<ApiResponse<ProductPriceResponse[]>>(`/api/v1/products/${productId}/prices`),
 
       /**
-       * Get active price for a product
+       * Get active/current price for a product
        *
        * @param productId - Product ID
        * @param priceType - Price type filter (PURCHASE, SALE, MRP)
@@ -194,6 +251,18 @@ const createProductService = (apiClient: ApiClient) => {
       getActive: (productId: string, priceType?: 'PURCHASE' | 'SALE' | 'MRP') =>
         apiClient.get<ApiResponse<ProductPriceResponse>>(`/api/v1/products/${productId}/prices/active`, {
           params: { price_type: priceType },
+        }),
+
+      /**
+       * Get current price for a product (alias for getActive)
+       *
+       * @param productId - Product ID
+       * @param type - Price type (default: retail)
+       * @returns Current active price
+       */
+      getCurrent: (productId: string, type: string = 'retail') =>
+        apiClient.get<ApiResponse<ProductPriceResponse>>(`/api/v1/products/${productId}/prices/current`, {
+          params: { type },
         }),
 
       /**
@@ -232,6 +301,42 @@ const createProductService = (apiClient: ApiClient) => {
        */
       bulkUpdate: (updates: Array<{ product_id: string; variant_id?: string; price_type: string; price: number }>) =>
         apiClient.post<ApiResponse<BulkOperationResponse>>('/api/v1/product-prices/bulk-update', { updates }),
+
+      /**
+       * Get a specific price by ID
+       *
+       * @param id - Price ID
+       * @returns Price details
+       */
+      get: (id: string) =>
+        apiClient.get<ApiResponse<ProductPriceResponse>>(`/api/v1/prices/${id}`),
+
+      /**
+       * Update a specific price by ID (using PATCH)
+       *
+       * @param id - Price ID
+       * @param payload - Price update data
+       * @returns Updated price
+       */
+      patch: (id: string, payload: UpdateProductPriceRequest) =>
+        apiClient.patch<ApiResponse<ProductPriceResponse>>(`/api/v1/prices/${id}`, payload),
+
+      /**
+       * Delete a specific price by ID
+       *
+       * @param id - Price ID
+       * @returns Void on success
+       */
+      deleteById: (id: string) =>
+        apiClient.delete<ApiResponse<void>>(`/api/v1/prices/${id}`),
+
+      /**
+       * Get all expired prices
+       *
+       * @returns List of expired prices
+       */
+      getExpired: () =>
+        apiClient.get<ApiResponse<ProductPriceResponse[]>>('/api/v1/prices/expired'),
     },
 
     /**
