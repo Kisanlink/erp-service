@@ -199,11 +199,14 @@ const createProductService = (apiClient: ApiClient) => {
          * Create price for a variant
          *
          * @param variantId - Variant ID
-         * @param payload - Price creation data (without variant_id as it's in URL)
+         * @param payload - Price creation data (variant_id will be added automatically)
          * @returns Created price
          */
         create: (variantId: string, payload: Omit<CreateProductPriceRequest, 'variant_id'>) =>
-          apiClient.post<ApiResponse<ProductPriceResponse>>(`/api/v1/variants/${variantId}/prices`, payload),
+          apiClient.post<ApiResponse<ProductPriceResponse>>(`/api/v1/variants/${variantId}/prices`, {
+            ...payload,
+            variant_id: variantId,
+          }),
 
         /**
          * Update variant price
