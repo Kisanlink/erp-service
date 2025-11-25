@@ -1,6 +1,6 @@
 {
   "name": "@kisanlink/erp-service",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TypeScript API client for Kisanlink ERP Service",
   "type": "module",
   "main": "./dist/index.js",

@@ -770,6 +770,67 @@ export interface TopSellingProductResponse {
 }
 
 // ============================================================================
+// Sale Cancellation Types
+// ============================================================================
+
+/**
+ * Cancellation item response for individual cancelled items
+ */
+export interface SaleCancellationItemResponse {
+  id: string;
+  cancellation_id: string;
+  sale_item_id: string;
+  batch_id: string;
+  quantity_cancelled: number;
+  refund_amount: number;
+  inventory_transaction_id?: string;
+  created_at: string;
+}
+
+/**
+ * Cancellation response for sale cancellation events
+ */
+export interface SaleCancellationResponse {
+  id: string;
+  sale_id: string;
+  cancellation_type: 'full' | 'partial';
+  reason?: string;
+  cancelled_by: string;
+  cancelled_at: string;
+  items: SaleCancellationItemResponse[];
+  inventory_returned: boolean;
+  discount_reversed: boolean;
+  tax_voided: boolean;
+  refund_amount: number;
+  created_at: string;
+}
+
+/**
+ * Request to cancel an entire sale
+ */
+export interface CancelSaleRequest {
+  reason?: string;
+  cancelled_by?: string;
+}
+
+/**
+ * Request to cancel a specific sale item
+ */
+export interface CancelSaleItemRequest {
+  item_id: string;
+  quantity?: number;
+  reason?: string;
+}
+
+/**
+ * Request to cancel multiple items from a sale
+ */
+export interface CancelSaleItemsRequest {
+  items: CancelSaleItemRequest[];
+  reason?: string;
+}
+
+// ============================================================================
 // Return Types
 // ============================================================================
 

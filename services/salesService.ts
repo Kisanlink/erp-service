@@ -8,6 +8,9 @@ import type {
   SaleItemResponse,
   CreateSaleItemRequest,
   BankPaymentResponse,
+  CancelSaleRequest,
+  CancelSaleItemsRequest,
+  SaleCancellationResponse,
 } from '../types/index.js';
 
 /**
@@ -154,14 +157,75 @@ const createSalesService = (apiClient: ApiClient) => {
     }) => apiClient.post<ApiResponse<SaleResponse>>(`/api/v1/sales/${id}/deliver`, payload),
 
     /**
-     * Cancel sale
+     * Cancel entire sale with inventory return
+     *
+     * Cancels the sale and returns inventory to original batches.
+     * The backend will also reverse discount usage and void tax records.
+     *
+     * Only sales with status: pending, confirmed, or processing can be cancelled.
+     * For shipped or delivered orders, use the returns service instead.
      *
      * @param id - Sale ID
-     * @param reason - Cancellation reason (optional)
+     * @param payload - Cancellation details (reason, cancelled_by)
      * @returns Cancelled sale
+     *
+     * @example
+     * ```typescript
+     * const cancelled = await salesService.cancel('SALE_001', {
+     *   reason: 'Customer requested cancellation',
+     *   cancelled_by: 'USER_001'
+     * });
+     * ```
      */
-    cancel: (id: string, reason?: string) =>
-      apiClient.post<ApiResponse<SaleResponse>>(`/api/v1/sales/${id}/cancel`, { reason }),
+    cancel: (id: string, payload?: CancelSaleRequest) =>
+      apiClient.post<ApiResponse<SaleResponse>>(`/api/v1/sales/${id}/cancel`, payload ?? {}),
+
+    /**
+     * Cancel specific items from a sale (partial cancellation)
+     *
+     * Allows cancelling individual items or partial quantities from a sale.
+     * Inventory for cancelled items is returned to original batches.
+     *
+     * @param id - Sale ID
+     * @param payload - Items to cancel with optional quantities and reasons
+     * @returns Cancellation record with details
+     *
+     * @example
+     * ```typescript
+     * const cancellation = await salesService.cancelItems('SALE_001', {
+     *   items: [
+     *     { item_id: 'ITEM_001', quantity: 2, reason: 'Damaged' },
+     *     { item_id: 'ITEM_002' } // Cancels entire item
+     *   ],
+     *   reason: 'Partial order cancellation'
+     * });
+     * ```
+     */
+    cancelItems: (id: string, payload: CancelSaleItemsRequest) =>
+      apiClient.post<ApiResponse<SaleCancellationResponse>>(`/api/v1/sales/${id}/cancel-items`, payload),
+
+    /**
+     * Get cancellation history for a sale
+     *
+     * Returns all cancellation events for a sale, including both full
+     * and partial cancellations with item details.
+     *
+     * @param id - Sale ID
+     * @param params - Pagination parameters
+     * @returns List of cancellation records
+     *
+     * @example
+     * ```typescript
+     * const history = await salesService.getCancellations('SALE_001', {
+     *   limit: 10,
+     *   offset: 0
+     * });
+     * ```
+     */
+    getCancellations: (id: string, params?: {
+      limit?: number;
+      offset?: number;
+    }) => apiClient.get<ApiResponse<SaleCancellationResponse[]>>(`/api/v1/sales/${id}/cancellations`, { params }),
 
     /**
      * Delete sale
