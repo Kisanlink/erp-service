@@ -20,6 +20,7 @@ import createSalesService from './services/salesService.js';
 import createTaxService from './services/taxService.js';
 import createWarehouseService from './services/warehouseService.js';
 import createWebhookService from './services/webhookService.js';
+import createReportService from './services/reportService.js';
 
 // Re-export types for convenience
 export * from './types/index.js';
@@ -137,6 +138,12 @@ const createERPService = (config: ERPServiceConfig) => {
      * Register, manage, and track webhook event notifications
      */
     webhooks: createWebhookService(apiClient),
+
+    /**
+     * Reports service
+     * Generate and export business reports (products, vendors, customers, inventory, purchases, sales, returns)
+     */
+    reports: createReportService(apiClient),
   };
 };
 

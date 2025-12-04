@@ -1317,3 +1317,9 @@ export interface WebhookEvent {
   deleted_at?: string;
   deleted_by?: string;
 }
+
+// ============================================================================
+// Report Types
+// ============================================================================
+
+export * from './reports.js';
