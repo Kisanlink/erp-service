@@ -726,7 +726,7 @@ export interface SaleItemResponse {
 export interface SaleResponse {
   id: string;
   warehouse_id: string;
-  farmer_id?: string;
+  customer_id?: string;
   sale_date: string;
   sale_type: string; // in_store, delivery
   payment_mode: string; // cash, upi, online
@@ -746,7 +746,7 @@ export interface CreateSaleItemRequest {
 
 export interface CreateSaleRequest {
   warehouse_id: string;
-  farmer_id?: string;
+  customer_id?: string;
   sale_date?: string;
   sale_type: string;
   payment_mode: string;

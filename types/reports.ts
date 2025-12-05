@@ -229,8 +229,8 @@ export interface CustomerReportSummary {
  * Individual customer record in report
  */
 export interface CustomerReportRecord {
-  /** Farmer/Customer ID */
-  farmer_id: string;
+  /** Customer ID */
+  customer_id: string;
   /** Total number of purchases */
   total_purchases: number;
   /** Total amount spent */
@@ -443,8 +443,8 @@ export type PurchaseReportResponse = ReportResponse<PurchaseReportSummary, Purch
 export interface SalesReportFilter extends BaseReportFilter {
   /** Filter by warehouse ID */
   warehouse_id?: string;
-  /** Filter by farmer/customer ID */
-  farmer_id?: string;
+  /** Filter by customer ID */
+  customer_id?: string;
   /** Filter by status (comma-separated for multiple) */
   status?: string;
   /** Filter by payment mode (comma-separated for multiple) */
@@ -517,8 +517,8 @@ export interface SalesReportRecord {
   sale_date: string;
   /** Sale status */
   status: string;
-  /** Farmer/Customer ID */
-  farmer_id?: string;
+  /** Customer ID */
+  customer_id?: string;
   /** Payment mode */
   payment_mode: string;
   /** Sale type */
