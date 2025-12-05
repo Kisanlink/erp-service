@@ -105,32 +105,43 @@ const createReturnService = (apiClient: ApiClient) => {
 
     /**
      * Approve return
+     * Uses PATCH /api/v1/returns/:id/status with status "approved"
      *
      * @param id - Return ID
      * @param notes - Approval notes (optional)
      * @returns Approved return
      */
     approve: (id: string, notes?: string) =>
-      apiClient.post<ApiResponse<ReturnResponse>>(`/api/v1/returns/${id}/approve`, { notes }),
+      apiClient.patch<ApiResponse<ReturnResponse>>(`/api/v1/returns/${id}/status`, {
+        status: 'approved',
+        notes,
+      }),
 
     /**
      * Reject return
+     * Uses PATCH /api/v1/returns/:id/status with status "rejected"
      *
      * @param id - Return ID
      * @param reason - Rejection reason
      * @returns Rejected return
      */
     reject: (id: string, reason: string) =>
-      apiClient.post<ApiResponse<ReturnResponse>>(`/api/v1/returns/${id}/reject`, { reason }),
+      apiClient.patch<ApiResponse<ReturnResponse>>(`/api/v1/returns/${id}/status`, {
+        status: 'rejected',
+        reason,
+      }),
 
     /**
      * Process return
+     * Uses PATCH /api/v1/returns/:id/status with status "processed"
      *
      * @param id - Return ID
      * @returns Processed return
      */
     process: (id: string) =>
-      apiClient.post<ApiResponse<ReturnResponse>>(`/api/v1/returns/${id}/process`, {}),
+      apiClient.patch<ApiResponse<ReturnResponse>>(`/api/v1/returns/${id}/status`, {
+        status: 'processed',
+      }),
 
     /**
      * Issue refund for return

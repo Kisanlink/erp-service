@@ -875,6 +875,8 @@ export interface UpdateReturnRequest {
 
 export interface UpdateReturnStatusRequest {
   status: string;
+  notes?: string;
+  reason?: string;
 }
 
 export interface MostReturnedProductResponse {
