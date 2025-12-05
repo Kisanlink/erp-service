@@ -85,6 +85,7 @@ export interface AttachmentResponse {
   entity_id: string; // CLAB_xxx, PO_xxx, etc.
   file_path: string; // S3 key/path
   file_type: string; // MIME type
+  download_url?: string; // Presigned S3 URL for downloading
   uploaded_by: string; // User ID
   uploaded_at: string;
   created_at: string;
@@ -211,6 +212,7 @@ export interface ProductResponse {
   id: string;
   name: string;
   description?: string;
+  variants?: ProductVariantResponse[];
   created_at: string;
   updated_at: string;
 }
@@ -245,6 +247,7 @@ export interface ProductVariantResponse {
   dosage_instructions?: string;
   usage_details?: string;
   images?: string[];
+  image_urls?: string[]; // Presigned S3 URLs for images
   is_active: boolean;
   created_at: string;
   updated_at: string;
