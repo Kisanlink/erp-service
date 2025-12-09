@@ -151,6 +151,23 @@ async function request<T>(
       return {} as T;
     }
 
+    // Check if response should be a blob (binary data)
+    const contentType = response.headers.get('content-type') || '';
+    const acceptHeader = options?.headers?.['Accept'] || options?.headers?.['accept'] || '';
+    const isBlobResponse = 
+      contentType.includes('application/pdf') ||
+      contentType.includes('application/octet-stream') ||
+      contentType.includes('application/vnd.openxmlformats-officedocument') ||
+      acceptHeader.includes('application/pdf') ||
+      acceptHeader.includes('application/octet-stream') ||
+      acceptHeader.includes('application/vnd.openxmlformats-officedocument');
+
+    // Handle blob responses (PDF, Excel, etc.) - return blob directly
+    if (isBlobResponse) {
+      const blob = await response.blob();
+      return blob as T;
+    }
+
     // Parse JSON response
     try {
       return (await response.json()) as T;

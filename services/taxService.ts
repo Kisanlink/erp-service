@@ -12,20 +12,14 @@ import type {
 } from '../types/index.js';
 
 /**
+ * @deprecated Tax service is deprecated. All tax endpoints have been removed from the API.
+ * Tax calculation is now automatic based on variant's gst_rate and sale's apply_taxes field.
+ * This service will be removed in a future version.
+ *
  * Creates tax service with calculation and reporting capabilities
  *
  * @param apiClient - Configured API client instance
  * @returns Tax service methods
- *
- * @example
- * ```typescript
- * const taxService = createTaxService(apiClient);
- * const calculation = await taxService.calculate({
- *   warehouse_id: 'WH_001',
- *   warehouse_state: 'Karnataka',
- *   items: [{ product_id: 'P_001', quantity: 10, unit_price: 100, line_total: 1000 }]
- * });
- * ```
  */
 const createTaxService = (apiClient: ApiClient) => {
   return {

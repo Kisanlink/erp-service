@@ -138,6 +138,49 @@ const createGRNService = (apiClient: ApiClient) => {
      */
     delete: (id: string) =>
       apiClient.delete<ApiResponse<void>>(`/api/v1/grns/${id}`),
+
+    /**
+     * Get rejected items from a GRN
+     *
+     * Returns all GRN items that were rejected during quality check.
+     *
+     * @param id - GRN ID
+     * @returns List of rejected GRN items with return tracking information
+     *
+     * @example
+     * ```typescript
+     * const rejectedItems = await grnService.getRejectedItems('GRN_001');
+     * ```
+     */
+    getRejectedItems: (id: string) =>
+      apiClient.get<ApiResponse<GRNItemResponse[]>>(`/api/v1/grns/${id}/rejected-items`),
+
+    /**
+     * Update return status for a rejected GRN item
+     *
+     * Tracks the return process: pending → sent → received_by_vendor → closed
+     *
+     * @param itemId - GRN item ID
+     * @param payload - Return status update data
+     * @returns Updated GRN item
+     *
+     * @example
+     * ```typescript
+     * const updated = await grnService.updateReturnStatus('GRIT_001', {
+     *   return_status: 'sent',
+     *   return_sent_date: '2025-12-01T10:00:00Z',
+     *   return_remarks: 'Shipped via courier'
+     * });
+     * ```
+     */
+    updateReturnStatus: (itemId: string, payload: {
+      return_status?: 'pending' | 'sent' | 'received_by_vendor' | 'closed';
+      return_sent_date?: string;
+      return_received_date?: string;
+      return_closed_date?: string;
+      return_remarks?: string;
+    }) =>
+      apiClient.patch<ApiResponse<GRNItemResponse>>(`/api/v1/grns/items/${itemId}/return-status`, payload),
   };
 };
 

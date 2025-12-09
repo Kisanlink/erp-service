@@ -50,7 +50,7 @@ const createInventoryService = (apiClient: ApiClient) => {
         low_stock?: boolean;
         limit?: number;
         offset?: number;
-      }) => apiClient.get<ApiResponse<InventoryBatchResponse[]>>('/api/v1/batches', { params }),
+      }) => apiClient.get<ApiResponse<InventoryBatchResponse[]>>('/api/v1/inventory/batches/list', { params }),
 
       /**
        * Get batch by ID

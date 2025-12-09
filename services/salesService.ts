@@ -287,6 +287,18 @@ const createSalesService = (apiClient: ApiClient) => {
     }) => apiClient.post<ApiResponse<BankPaymentResponse>>(`/api/v1/sales/${id}/payment`, payload),
 
     /**
+     * Check invoice requirements
+     * Verifies if all required settings are configured for invoice generation
+     *
+     * @returns Invoice requirements status with missing settings list
+     */
+    checkInvoiceRequirements: () =>
+      apiClient.get<ApiResponse<{
+        ready: boolean;
+        missing_settings: string[];
+      }>>('/api/v1/sales/invoice-requirements'),
+
+    /**
      * Generate invoice PDF
      *
      * @param id - Sale ID

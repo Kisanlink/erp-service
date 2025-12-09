@@ -9,6 +9,7 @@ import { createApiClient } from './utils/apiClient.js';
 // Import all service factories
 import createAttachmentService from './services/attachmentService.js';
 import createBankPaymentService from './services/bankPaymentService.js';
+import createCategoryService from './services/categoryService.js';
 import createCollaboratorService from './services/collaboratorService.js';
 import createDiscountService from './services/discountService.js';
 import createGRNService from './services/grnService.js';
@@ -17,10 +18,14 @@ import createProductService from './services/productService.js';
 import createPurchaseOrderService from './services/purchaseOrderService.js';
 import createReturnService from './services/returnService.js';
 import createSalesService from './services/salesService.js';
-import createTaxService from './services/taxService.js';
+import createSubcategoryService from './services/subcategoryService.js';
+// Tax service removed - tax endpoints no longer exist in API
+// import createTaxService from './services/taxService.js';
 import createWarehouseService from './services/warehouseService.js';
 import createWebhookService from './services/webhookService.js';
 import createReportService from './services/reportService.js';
+import createAggregationService from './services/aggregationService.js';
+import createSettingsService from './services/settingsService.js';
 
 // Re-export types for convenience
 export * from './types/index.js';
@@ -74,6 +79,12 @@ const createERPService = (config: ERPServiceConfig) => {
     bankPayments: createBankPaymentService(apiClient),
 
     /**
+     * Category management service
+     * Manage product categories with subcategories
+     */
+    categories: createCategoryService(apiClient),
+
+    /**
      * Collaborator (supplier/vendor) management service
      * Manage suppliers, their products, and associations
      */
@@ -122,10 +133,16 @@ const createERPService = (config: ERPServiceConfig) => {
     sales: createSalesService(apiClient),
 
     /**
-     * Tax calculation and reporting service
-     * Calculate GST/VAT, generate tax reports, manage tax rules
+     * Subcategory management service
+     * Manage product subcategories within categories
      */
-    taxes: createTaxService(apiClient),
+    subcategories: createSubcategoryService(apiClient),
+
+    /**
+     * @deprecated Tax service removed - tax endpoints no longer exist in API
+     * Tax calculation is now automatic based on variant's gst_rate and sale's apply_taxes field
+     */
+    // taxes: createTaxService(apiClient),
 
     /**
      * Warehouse management service
@@ -144,6 +161,18 @@ const createERPService = (config: ERPServiceConfig) => {
      * Generate and export business reports (products, vendors, customers, inventory, purchases, sales, returns)
      */
     reports: createReportService(apiClient),
+
+    /**
+     * Aggregation service
+     * Performance-optimized endpoints that reduce API calls by aggregating related data
+     */
+    aggregation: createAggregationService(apiClient),
+
+    /**
+     * Settings service
+     * Manage FPO and system settings (company name, logo, addresses, bank details)
+     */
+    settings: createSettingsService(apiClient),
   };
 };
 

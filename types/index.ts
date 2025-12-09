@@ -212,6 +212,8 @@ export interface ProductResponse {
   id: string;
   name: string;
   description?: string;
+  category_id?: string; // NEW: Category ID reference (nullable)
+  subcategory_id?: string; // NEW: Subcategory ID reference (nullable)
   variants?: ProductVariantResponse[];
   created_at: string;
   updated_at: string;
@@ -220,11 +222,15 @@ export interface ProductResponse {
 export interface CreateProductRequest {
   name: string;
   description?: string;
+  category_id?: string; // NEW: Category ID (nullable)
+  subcategory_id?: string; // NEW: Subcategory ID (nullable)
 }
 
 export interface UpdateProductRequest {
   name?: string;
   description?: string;
+  category_id?: string; // NEW: Category ID
+  subcategory_id?: string; // NEW: Subcategory ID
 }
 
 // ============================================================================
@@ -240,10 +246,12 @@ export interface ProductVariantResponse {
   pack_size: string;
   quantity: string;
   description?: string;
-  collaborator_id?: string;
+  collaborator_id?: string; // DEPRECATED: Use collaborator_ids instead
+  collaborator_ids: string[]; // UPDATED: Array of collaborator IDs (required in new API)
   brand_name?: string;
-  hsn_code?: string;
-  gst_rate?: number;
+  hsn_code: string; // UPDATED: Required for GST classification
+  gst_rate: number; // UPDATED: Required GST rate (0, 5, 12, 18, or 28)
+  prices?: ProductPriceResponse[]; // NEW: Array of prices for this variant
   dosage_instructions?: string;
   usage_details?: string;
   images?: string[];
@@ -260,10 +268,11 @@ export interface CreateProductVariantRequest {
   sku?: string;
   barcode?: string;
   description?: string;
-  collaborator_id?: string;
+  collaborator_ids: string[]; // UPDATED: Array of collaborator IDs (replaces collaborator_id)
   brand_name?: string;
-  hsn_code?: string;
-  gst_rate?: number;
+  hsn_code: string; // UPDATED: Required for GST classification
+  gst_rate: number; // UPDATED: Required GST rate (0, 5, 12, 18, or 28)
+  prices?: Array<Omit<CreateProductPriceRequest, 'variant_id'>>; // NEW: Prices array (variant_id will be added automatically)
   dosage_instructions?: string;
   usage_details?: string;
   images?: string[];
@@ -358,12 +367,12 @@ export interface InventoryBatchResponse {
   variant_id: string;
   warehouse_id: string;
   total_quantity: number;
+  reserved_quantity?: number; // NEW: Stock reserved by pending sales
+  available_quantity?: number; // NEW: total_quantity - reserved_quantity
   cost_price: number;
   expiry_date: string;
-  cgst_rate?: number;
-  sgst_rate?: number;
-  custom_tax_ids?: string[];
-  is_tax_exempt?: boolean;
+  batch_number?: string; // Optional batch identifier
+  // REMOVED: cgst_rate, sgst_rate, custom_tax_ids, is_tax_exempt (tax now comes from variant)
   created_at: string;
   updated_at: string;
 }
@@ -374,10 +383,8 @@ export interface CreateInventoryBatchRequest {
   quantity: number;
   cost_price: number;
   expiry_date: string;
-  cgst_rate?: number;
-  sgst_rate?: number;
-  custom_tax_ids?: string[];
-  is_tax_exempt?: boolean;
+  batch_number?: string; // Optional batch identifier
+  // REMOVED: cgst_rate, sgst_rate, custom_tax_ids, is_tax_exempt (tax now comes from variant)
 }
 
 export interface InventoryTransactionResponse {
@@ -408,12 +415,12 @@ export interface ProductAvailabilityResponse {
   product_sku: string;
   product_description?: string;
   total_quantity: number;
+  reserved_quantity?: number; // NEW: Stock reserved by pending sales
+  available_quantity?: number; // NEW: total_quantity - reserved_quantity
   cost_price: number;
   expiry_date: string;
-  cgst_rate?: number;
-  sgst_rate?: number;
-  custom_tax_ids?: string[];
-  is_tax_exempt?: boolean;
+  batch_number?: string; // Optional batch identifier
+  // REMOVED: cgst_rate, sgst_rate, custom_tax_ids, is_tax_exempt (tax now comes from variant)
   created_at: string;
   updated_at: string;
 }
@@ -432,6 +439,16 @@ export interface PurchaseOrderItemResponse {
   unit_price: number;
   line_total: number;
   received_quantity: number;
+  // NEW: GST breakdown fields
+  base_price?: number; // Price before GST (reverse-calculated from unit_price)
+  gst_rate?: number; // GST rate from variant (e.g., 5, 12, 18, 28)
+  gst_amount?: number; // Total GST per unit
+  cgst_rate?: number; // Central GST rate (0 if inter-state)
+  cgst_amount?: number; // Central GST amount per unit (0 if inter-state)
+  sgst_rate?: number; // State GST rate (0 if inter-state)
+  sgst_amount?: number; // State GST amount per unit (0 if inter-state)
+  igst_rate?: number; // Integrated GST rate (0 if intra-state)
+  igst_amount?: number; // Integrated GST amount per unit (0 if intra-state)
   created_at: string;
 }
 
@@ -445,10 +462,13 @@ export interface PurchaseOrderResponse {
   order_date: string;
   expected_delivery_date: string;
   actual_delivery_date?: string;
-  status: string; // placed, confirmed, out_for_delivery, delivered, paid
+  status: string; // UPDATED: placed, confirmed, out_for_delivery, delivered, verified, paid
   payment_status: string; // unpaid, partial, paid
   paid_amount: number;
   total_amount: number;
+  total_rejected_amount?: number; // NEW: Value of rejected items from GRN
+  amount_owed?: number; // NEW: total_amount - total_rejected_amount
+  is_inter_state?: boolean | null; // NEW: true = inter-state (IGST), false = intra-state (CGST+SGST), null = unknown
   items: PurchaseOrderItemResponse[];
   created_at: string;
   updated_at: string;
@@ -509,6 +529,13 @@ export interface GRNItemResponse {
   batch_number?: string;
   expiry_date: string;
   inventory_batch_id?: string;
+  // NEW: Return tracking fields for rejected items
+  return_status?: string; // pending, sent, received_by_vendor, closed
+  return_sent_date?: string | null; // When shipped to vendor
+  return_received_date?: string | null; // When vendor confirmed receipt
+  return_closed_date?: string | null; // When return process closed
+  return_remarks?: string | null; // Notes about return
+  rejection_reason?: string; // Reason for rejection
   created_at: string;
 }
 
@@ -726,13 +753,16 @@ export interface SaleItemResponse {
 export interface SaleResponse {
   id: string;
   warehouse_id: string;
-  customer_id?: string;
+  // UPDATED: Replaced customer_id with customer details
+  customer_phone?: string | null; // NEW: Customer phone number (nullable)
+  customer_name?: string | null; // NEW: Customer name (nullable)
+  is_org_member: boolean; // NEW: Whether customer is FPO member
   sale_date: string;
   sale_type: string; // in_store, delivery
   payment_mode: string; // cash, upi, online
-  status: string;
+  status: string; // UPDATED: pending, completed, cancelled
   total_amount: number;
-  apply_taxes: boolean;
+  apply_taxes: boolean; // Controls whether GST is calculated (default: false)
   breakdown: SaleBreakdown;
   items: SaleItemResponse[];
   created_at: string;
@@ -746,15 +776,19 @@ export interface CreateSaleItemRequest {
 
 export interface CreateSaleRequest {
   warehouse_id: string;
-  customer_id?: string;
+  // UPDATED: Replaced customer_id with customer details
+  customer_phone?: string | null; // NEW: Customer phone number (nullable)
+  customer_name?: string | null; // NEW: Customer name (nullable)
+  is_org_member?: boolean; // NEW: Whether customer is FPO member (default: false)
   sale_date?: string;
   sale_type: string;
   payment_mode: string;
   items: CreateSaleItemRequest[];
-  apply_taxes?: boolean;
+  apply_taxes?: boolean; // Controls whether GST is calculated (default: false)
   auto_apply_discounts?: boolean;
   discount_id?: string;
   coupon_code?: string;
+  delivery_state?: string | null; // Optional: State code for inter-state IGST detection
 }
 
 export interface UpdateSaleRequest {
@@ -1321,6 +1355,68 @@ export interface WebhookEvent {
   updated_by?: string;
   deleted_at?: string;
   deleted_by?: string;
+}
+
+// ============================================================================
+// Category Types
+// ============================================================================
+
+/**
+ * Subcategory response (nested in CategoryResponse)
+ */
+export interface SubcategoryResponse {
+  id: string;
+  name: string;
+  description?: string;
+  category_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Category response with subcategories
+ */
+export interface CategoryResponse {
+  id: string;
+  name: string;
+  description?: string;
+  subcategories: SubcategoryResponse[];
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Create category request
+ */
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+}
+
+/**
+ * Update category request
+ */
+export interface UpdateCategoryRequest {
+  name?: string;
+  description?: string;
+}
+
+/**
+ * Create subcategory request
+ */
+export interface CreateSubcategoryRequest {
+  name: string;
+  category_id: string;
+  description?: string;
+}
+
+/**
+ * Update subcategory request
+ */
+export interface UpdateSubcategoryRequest {
+  name?: string;
+  category_id?: string;
+  description?: string;
 }
 
 // ============================================================================

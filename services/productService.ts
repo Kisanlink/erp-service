@@ -145,11 +145,12 @@ const createProductService = (apiClient: ApiClient) => {
       /**
        * Create product variant
        *
+       * @param productId - Product ID
        * @param payload - Variant creation data
        * @returns Created variant
        */
-      create: (payload: CreateProductVariantRequest) =>
-        apiClient.post<ApiResponse<ProductVariantResponse>>('/api/v1/product-variants', payload),
+      create: (productId: string, payload: CreateProductVariantRequest) =>
+        apiClient.post<ApiResponse<ProductVariantResponse>>(`/api/v1/products/${productId}/variants`, payload),
 
       /**
        * Update product variant
@@ -357,13 +358,18 @@ const createProductService = (apiClient: ApiClient) => {
     }),
 
     /**
-     * Get products by category
+     * Get products by category ID
      *
-     * @param category - Category name
+     * @param categoryId - Category ID
+     * @param params - Additional filter parameters
      * @returns Products in category
      */
-    getByCategory: (category: string) =>
-      apiClient.get<ApiResponse<ProductResponse[]>>(`/api/v1/products/category/${category}`),
+    getByCategory: (categoryId: string, params?: {
+      limit?: number;
+      offset?: number;
+      is_active?: boolean;
+    }) =>
+      apiClient.get<ApiResponse<ProductResponse[]>>(`/api/v1/products/category/${categoryId}`, { params }),
 
     /**
      * Get product by barcode
