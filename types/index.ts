@@ -854,7 +854,7 @@ export interface CancelSaleRequest {
  * Request to cancel a specific sale item
  */
 export interface CancelSaleItemRequest {
-  item_id: string;
+  SaleItemID: string;
   quantity?: number;
   reason?: string;
 }
@@ -864,7 +864,8 @@ export interface CancelSaleItemRequest {
  */
 export interface CancelSaleItemsRequest {
   items: CancelSaleItemRequest[];
-  reason?: string;
+  Reason: string;
+  PerformedBy: string;
 }
 
 // ============================================================================

@@ -201,8 +201,62 @@ const createSalesService = (apiClient: ApiClient) => {
      * });
      * ```
      */
-    cancelItems: (id: string, payload: CancelSaleItemsRequest) =>
-      apiClient.post<ApiResponse<SaleCancellationResponse>>(`/api/v1/sales/${id}/cancel-items`, payload),
+    cancelItems: (id: string, payload: CancelSaleItemsRequest | any) => {
+      // Accept both PascalCase (for backward compatibility) and lowercase/snake_case formats
+      // Backend expects lowercase/snake_case: { reason, performed_by, items: [{ sale_item_id, quantity, reason? }] }
+      
+      // Extract and validate reason - handle both formats
+      const reason = payload.reason 
+        ? String(payload.reason).trim() 
+        : (payload.Reason ? String(payload.Reason).trim() : '');
+      if (!reason || reason.length === 0) {
+        throw new Error('Reason is required and cannot be empty');
+      }
+      
+      // Extract and validate performed_by - handle both formats
+      const performedBy = payload.performed_by 
+        ? String(payload.performed_by).trim() 
+        : (payload.PerformedBy ? String(payload.PerformedBy).trim() : '');
+      if (!performedBy || performedBy.length === 0) {
+        throw new Error('PerformedBy is required and cannot be empty');
+      }
+      
+      // Validate and transform items
+      if (!payload.items || !Array.isArray(payload.items) || payload.items.length === 0) {
+        throw new Error('At least one item is required');
+      }
+      
+      // Transform items to backend format (lowercase/snake_case)
+      const items = payload.items.map((item: any, index: number) => {
+        // Extract sale_item_id - handle both SaleItemID and sale_item_id
+        const saleItemId = item.sale_item_id 
+          ? String(item.sale_item_id).trim() 
+          : (item.SaleItemID ? String(item.SaleItemID).trim() : '');
+        
+        if (!saleItemId || saleItemId.length === 0) {
+          throw new Error(`SaleItemID is required for item at index ${index} and cannot be empty`);
+        }
+        
+        // Return in backend format (snake_case)
+        return {
+          sale_item_id: saleItemId, // Backend expects snake_case
+          quantity: item.quantity !== undefined ? Number(item.quantity) : undefined,
+          reason: item.reason ? String(item.reason).trim() : undefined,
+        };
+      });
+      
+      // Backend expects all fields in lowercase/snake_case format
+      const backendPayload: any = {
+        reason: reason, // Backend expects lowercase
+        performed_by: performedBy, // Backend expects snake_case
+        items: items, // Already in correct format (snake_case)
+      };
+      
+      // Always log the transformed payload to verify it's correct
+      console.log('[SalesService] cancelItems - Backend payload:', JSON.stringify(backendPayload, null, 2));
+      
+      return apiClient.post<ApiResponse<SaleCancellationResponse>>(`/api/v1/sales/${id}/cancel-items`, backendPayload);
+    },
 
     /**
      * Get cancellation history for a sale

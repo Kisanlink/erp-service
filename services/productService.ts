@@ -90,7 +90,7 @@ const createProductService = (apiClient: ApiClient) => {
      * @returns Updated product
      */
     update: (id: string, payload: UpdateProductRequest) =>
-      apiClient.put<ApiResponse<ProductResponse>>(`/api/v1/products/${id}`, payload),
+      apiClient.patch<ApiResponse<ProductResponse>>(`/api/v1/products/${id}`, payload),
 
     /**
      * Delete product
@@ -365,6 +365,7 @@ const createProductService = (apiClient: ApiClient) => {
      * @returns Products in category
      */
     getByCategory: (categoryId: string, params?: {
+      subcategory_id?: string;
       limit?: number;
       offset?: number;
       is_active?: boolean;
