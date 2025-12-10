@@ -403,6 +403,22 @@ const createProductService = (apiClient: ApiClient) => {
       apiClient.get<ApiResponse<ProductResponse[]>>('/api/v1/products/slow-moving', {
         params: { days },
       }),
+
+    /**
+     * Get products filtered by total inventory quantity across all warehouses
+     *
+     * @param params - Filter parameters
+     * @returns Products within the specified quantity range
+     */
+    getByQuantity: (params: {
+      min: number;
+      max: number;
+      limit?: number;
+      offset?: number;
+    }) =>
+      apiClient.get<ApiResponse<ProductResponse[]>>('/api/v1/products/by-quantity', {
+        params,
+      }),
   };
 };
 

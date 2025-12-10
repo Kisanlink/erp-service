@@ -373,6 +373,9 @@ export interface InventoryBatchResponse {
   expiry_date: string;
   batch_number?: string; // Optional batch identifier
   // REMOVED: cgst_rate, sgst_rate, custom_tax_ids, is_tax_exempt (tax now comes from variant)
+  // NEW: Expiry status indicators
+  is_expired?: boolean; // true if expiry_date < current date
+  expiry_status?: 'fresh' | 'expiring_soon' | 'expired'; // Status based on expiry date
   created_at: string;
   updated_at: string;
 }
@@ -405,24 +408,36 @@ export interface CreateInventoryTransactionRequest {
   note?: string;
 }
 
-export interface ProductAvailabilityResponse {
-  id: string;
-  variant_id: string;
+/**
+ * Warehouse-level availability detail within a product availability group
+ */
+export interface WarehouseAvailabilityDetail {
   warehouse_id: string;
   warehouse_name: string;
   address?: AddressInfo;
+  quantity: number; // Available (non-expired) quantity in this warehouse
+  expired_quantity: number; // Expired quantity in this warehouse
+  earliest_expiry: string; // Earliest expiry date in this warehouse
+  expiry_status: 'fresh' | 'expiring_soon' | 'expired'; // Status based on earliest expiry
+}
+
+/**
+ * Product availability response - grouped by SKU
+ * NEW FORMAT: Response groups batches by SKU instead of returning flat list
+ * 
+ * @deprecated The old flat structure is no longer returned by the API
+ * Use ProductAvailabilityGroupedResponse instead
+ */
+export interface ProductAvailabilityResponse {
+  sku: string;
+  variant_id: string;
   product_name: string;
-  product_sku: string;
   product_description?: string;
-  total_quantity: number;
-  reserved_quantity?: number; // NEW: Stock reserved by pending sales
-  available_quantity?: number; // NEW: total_quantity - reserved_quantity
-  cost_price: number;
-  expiry_date: string;
-  batch_number?: string; // Optional batch identifier
-  // REMOVED: cgst_rate, sgst_rate, custom_tax_ids, is_tax_exempt (tax now comes from variant)
-  created_at: string;
-  updated_at: string;
+  total_quantity: number; // Total AVAILABLE (non-expired) across all warehouses
+  expired_quantity: number; // Total EXPIRED across all warehouses
+  earliest_expiry: string; // Earliest expiry date across all warehouses
+  expiry_status: 'fresh' | 'expiring_soon' | 'expired'; // Status based on earliest expiry
+  warehouse_details: WarehouseAvailabilityDetail[]; // Warehouse-level breakdown
 }
 
 // ============================================================================
@@ -449,6 +464,11 @@ export interface PurchaseOrderItemResponse {
   sgst_amount?: number; // State GST amount per unit (0 if inter-state)
   igst_rate?: number; // Integrated GST rate (0 if intra-state)
   igst_amount?: number; // Integrated GST amount per unit (0 if intra-state)
+  // NEW: Line item GST totals (per-unit × quantity)
+  gst_amount_total?: number; // Total GST for line item (gst_amount × quantity)
+  cgst_amount_total?: number; // Total CGST for line item (cgst_amount × quantity)
+  sgst_amount_total?: number; // Total SGST for line item (sgst_amount × quantity)
+  igst_amount_total?: number; // Total IGST for line item (igst_amount × quantity)
   created_at: string;
 }
 
@@ -466,6 +486,12 @@ export interface PurchaseOrderResponse {
   payment_status: string; // unpaid, partial, paid
   paid_amount: number;
   total_amount: number;
+  // NEW: GST total fields
+  total_base_amount?: number; // Sum of item base prices
+  total_gst_amount?: number; // Sum of all GST
+  total_cgst_amount?: number; // Sum of all CGST (intra-state)
+  total_sgst_amount?: number; // Sum of all SGST (intra-state)
+  total_igst_amount?: number; // Sum of all IGST (inter-state)
   total_rejected_amount?: number; // NEW: Value of rejected items from GRN
   amount_owed?: number; // NEW: total_amount - total_rejected_amount
   is_inter_state?: boolean | null; // NEW: true = inter-state (IGST), false = intra-state (CGST+SGST), null = unknown
@@ -485,6 +511,7 @@ export interface CreatePurchaseOrderRequest {
   warehouse_id: string;
   order_date?: string;
   expected_delivery_date: string;
+  is_inter_state?: boolean | null; // NEW: null=auto-detect, true=IGST, false=CGST+SGST
   items: CreatePurchaseOrderItemRequest[];
 }
 
