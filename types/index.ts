@@ -265,7 +265,6 @@ export interface CreateProductVariantRequest {
   variant_name: string;
   pack_size: string;
   quantity: string;
-  sku?: string;
   barcode?: string;
   description?: string;
   collaborator_ids: string[]; // UPDATED: Array of collaborator IDs (replaces collaborator_id)
@@ -438,6 +437,11 @@ export interface ProductAvailabilityResponse {
   earliest_expiry: string; // Earliest expiry date across all warehouses
   expiry_status: 'fresh' | 'expiring_soon' | 'expired'; // Status based on earliest expiry
   warehouse_details: WarehouseAvailabilityDetail[]; // Warehouse-level breakdown
+  hsn_code?: string; // NEW: HSN code for GST classification
+  gst_rate?: number; // NEW: Total GST rate (0, 5, 12, 18, or 28)
+  cgst_rate?: number; // NEW: Central GST rate (gst_rate / 2)
+  sgst_rate?: number; // NEW: State GST rate (gst_rate / 2)
+  images?: string[]; // NEW: Array of S3 paths for variant images (not presigned URLs)
 }
 
 // ============================================================================
@@ -765,6 +769,7 @@ export interface SaleItemResponse {
   id: string;
   sale_id: string;
   batch_id: string;
+  sku?: string; // NEW: Product variant SKU (fetched from variant through batch)
   quantity: number;
   selling_price: number;
   cost_price: number;
@@ -789,12 +794,18 @@ export interface SaleResponse {
   payment_mode: string; // cash, upi, online
   status: string; // UPDATED: pending, completed, cancelled
   total_amount: number;
-  apply_taxes: boolean; // Controls whether GST is calculated (default: false)
+  apply_taxes: boolean; // Controls whether GST is calculated (default: true - BREAKING CHANGE)
   breakdown: SaleBreakdown;
   items: SaleItemResponse[];
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Sale list response - items and breakdown are NOT included for performance
+ * Use GET /api/v1/sales/{id} to get full details with items and breakdown
+ */
+export type SaleListResponse = Omit<SaleResponse, 'items' | 'breakdown'>;
 
 export interface CreateSaleItemRequest {
   variant_id: string;
@@ -811,7 +822,7 @@ export interface CreateSaleRequest {
   sale_type: string;
   payment_mode: string;
   items: CreateSaleItemRequest[];
-  apply_taxes?: boolean; // Controls whether GST is calculated (default: false)
+  apply_taxes?: boolean; // Controls whether GST is calculated (default: true - BREAKING CHANGE)
   auto_apply_discounts?: boolean;
   discount_id?: string;
   coupon_code?: string;
@@ -820,6 +831,10 @@ export interface CreateSaleRequest {
 
 export interface UpdateSaleRequest {
   status?: string;
+  payment_mode?: string; // "cash", "upi", or "online"
+  sale_type?: string; // "in_store" or "delivery"
+  customer_phone?: string | null; // Customer phone number
+  customer_name?: string | null; // Customer name
 }
 
 export interface UpdateSaleStatusRequest {
