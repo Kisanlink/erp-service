@@ -5,6 +5,7 @@ import type {
   CreateCollaboratorRequest,
   UpdateCollaboratorRequest,
   PurchaseOrderResponse,
+  ProductVariantResponse,
 } from '../types/index.js';
 
 /**
@@ -113,6 +114,41 @@ const createCollaboratorService = (apiClient: ApiClient) => {
       `/api/v1/collaborators/${id}/purchase-orders`,
       { params }
     ),
+
+    /**
+     * Get variants for collaborator
+     *
+     * @param id - Collaborator ID
+     * @param params - Pagination parameters
+     * @returns List of variants with pagination
+     */
+    getVariants: (id: string, params?: {
+      limit?: number;
+      offset?: number;
+    }) => apiClient.get<ApiResponse<{
+      data: ProductVariantResponse[];
+      pagination: {
+        total: number;
+        limit: number;
+        offset: number;
+      };
+    }>>(`/api/v1/collaborators/${id}/variants`, { params }),
+
+    /**
+     * Get collaborator statistics
+     *
+     * @param id - Collaborator ID
+     * @returns Collaborator transaction statistics
+     */
+    getStats: (id: string) => apiClient.get<ApiResponse<{
+      collaborator_id: string;
+      company_name: string;
+      po_count: number;
+      grn_count: number;
+      total_amount: number;
+      active_po_count: number;
+      last_po_date: string | null;
+    }>>(`/api/v1/collaborators/${id}/stats`),
   };
 };
 
