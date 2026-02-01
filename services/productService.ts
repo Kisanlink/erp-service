@@ -143,6 +143,15 @@ const createProductService = (apiClient: ApiClient) => {
         apiClient.get<ApiResponse<ProductVariantResponse>>(`/api/v1/products/${productId}/variants/${variantId}`),
 
       /**
+       * Get variant by SKU
+       *
+       * @param sku - Variant SKU
+       * @returns Variant details
+       */
+      getBySku: (sku: string) =>
+        apiClient.get<ApiResponse<ProductVariantResponse>>(`/api/v1/variants/sku/${sku}`),
+
+      /**
        * Create product variant
        *
        * @param productId - Product ID
@@ -160,7 +169,7 @@ const createProductService = (apiClient: ApiClient) => {
        * @returns Updated variant
        */
       update: (id: string, payload: UpdateProductVariantRequest) =>
-        apiClient.put<ApiResponse<ProductVariantResponse>>(`/api/v1/product-variants/${id}`, payload),
+        apiClient.put<ApiResponse<ProductVariantResponse>>(`/api/v1/variants/${id}`, payload),
 
       /**
        * Delete product variant

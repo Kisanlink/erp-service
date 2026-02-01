@@ -41,7 +41,20 @@ const createPurchaseOrderService = (apiClient: ApiClient) => {
       to_date?: string;
       limit?: number;
       offset?: number;
-    }) => apiClient.get<ApiResponse<PurchaseOrderResponse[]>>('/api/v1/purchase-orders', { params }),
+    }) => {
+      // If status is provided and not empty, use path parameter endpoint: /api/v1/purchase-orders/status/:status
+      if (params?.status && params.status.trim().length > 0 && params.status !== 'all') {
+        const { status, ...otherParams } = params;
+        return apiClient.get<ApiResponse<PurchaseOrderResponse[]>>(
+          `/api/v1/purchase-orders/status/${status}`,
+          { params: otherParams }
+        );
+      }
+      // Otherwise use the standard endpoint with query parameters
+      // Remove status from params if it exists to avoid sending it as query param
+      const { status: _, ...paramsWithoutStatus } = params || {};
+      return apiClient.get<ApiResponse<PurchaseOrderResponse[]>>('/api/v1/purchase-orders', { params: paramsWithoutStatus });
+    },
 
     /**
      * Get purchase order by ID

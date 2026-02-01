@@ -2,6 +2,7 @@ import type { ApiClient } from '../utils/apiClient.js';
 import type {
   ApiResponse,
   SaleResponse,
+  SaleListResponse,
   CreateSaleRequest,
   UpdateSaleRequest,
   UpdateSaleStatusRequest,
@@ -57,9 +58,11 @@ const createSalesService = (apiClient: ApiClient) => {
   return {
     /**
      * List sales with optional filters
+     * Note: items and breakdown are NOT included in list response for performance
+     * Use get(id) to fetch full sale details with items and breakdown
      *
      * @param params - Filter parameters
-     * @returns List of sales
+     * @returns List of sales (without items and breakdown)
      */
     list: (params?: {
       customer_id?: string;
@@ -69,7 +72,7 @@ const createSalesService = (apiClient: ApiClient) => {
       to_date?: string;
       limit?: number;
       offset?: number;
-    }) => apiClient.get<ApiResponse<SaleResponse[]>>('/api/v1/sales', { params }),
+    }) => apiClient.get<ApiResponse<SaleListResponse[]>>('/api/v1/sales', { params }),
 
     /**
      * Get sale by ID
@@ -107,6 +110,18 @@ const createSalesService = (apiClient: ApiClient) => {
      */
     update: (id: string, payload: UpdateSaleRequest) =>
       apiClient.put<ApiResponse<SaleResponse>>(`/api/v1/sales/${id}`, payload),
+
+    /**
+     * Partially update a sale (PATCH)
+     * Only pending sales can be updated
+     * Updateable fields: payment_mode, sale_type, customer_phone, customer_name
+     *
+     * @param id - Sale ID
+     * @param payload - Partial sale update data
+     * @returns Updated sale
+     */
+    patch: (id: string, payload: Partial<UpdateSaleRequest>) =>
+      apiClient.patch<ApiResponse<SaleResponse>>(`/api/v1/sales/${id}`, payload),
 
     /**
      * Update sale status
